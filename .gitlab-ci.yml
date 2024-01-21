@@ -1,21 +1,101 @@
 stages:
-  - docker
+  - test
+  - build
+  - release
 
-build-docker-scratch:
-  variables:
-    GIT_DEPTH: 500
-  stage: docker
-  image:
-    name: alpine:3.16.2
-  script:
-    - apk add podman
-    - DOCKER_TAG_NAME="${CI_COMMIT_TAG:-master}"
-    - podman build --file $CI_PROJECT_DIR/Dockerfile --tag $CI_REGISTRY_IMAGE:$DOCKER_TAG_NAME --build-arg version=$DOCKER_TAG_NAME --build-arg release=$DOCKER_TAG_NAME --target void
-    - podman login --tls-verify --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-    - podman push --tls-verify $CI_REGISTRY_IMAGE:$DOCKER_TAG_NAME
+variables:
+  CARGO_NAME: qr_service
+  PACKAGE_REGISTRY_NAME: ${CARGO_NAME}
+  PACKAGE_REGISTRY_URL: ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${PACKAGE_REGISTRY_NAME}
+
+test-build:
+  image: rust:latest
+  stage: test
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "master"'
-    - if: '$CI_COMMIT_TAG != null'
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-      when: manual
-      allow_failure: true
+    - changes:
+        - src/**/*
+        - Cargo.toml
+        - Cargo.lock
+  script:
+    - cargo build
+
+release-build:
+  image: rust:latest
+  stage: build
+  only: [tags]
+
+  script:
+    - cargo build --release
+    - cp target/release/${CARGO_NAME} .
+
+  artifacts:
+    paths:
+      - ${CARGO_NAME}
+
+release-upload:
+  image: curlimages/curl:latest
+
+  stage: release
+  needs:
+    - job: release-build
+      artifacts: true
+  only: [tags]
+
+  script:
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${CARGO_NAME} ${PACKAGE_REGISTRY_URL}/${CI_COMMIT_TAG}/${CARGO_NAME}
+    - |
+      curl --header "JOB-TOKEN: ${CI_JOB_TOKEN}" --upload-file ${CARGO_NAME} ${PACKAGE_REGISTRY_URL}/latest/${CARGO_NAME}
+
+release-release:
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  stage: release
+
+  needs: [release-upload]
+  only: [tags]
+
+  script:
+    - release-cli create --name "$CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG --assets-link "{\"name\":\"${CARGO_NAME}\",\"url\":\"${PACKAGE_REGISTRY_URL}/${CI_COMMIT_TAG}/${CARGO_NAME}\"}"
+
+docker-build:
+  image: docker:latest
+  stage: build
+  services: [docker:dind]
+
+  only: [tags]
+
+  before_script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        tag=""
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+      else
+        tag=":$CI_COMMIT_REF_SLUG"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+
+  script:
+    - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
+
+docker-registry:
+  image: docker:latest
+  services: [ docker:dind ]
+  stage: release
+
+  dependencies: [ docker-build ]
+  needs: [ docker-build ]
+  only: [tags]
+
+  before_script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "$CI_DEFAULT_BRANCH" ]]; then
+        tag=""
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+      else
+        tag=":$CI_COMMIT_REF_SLUG"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+  script:
+    - docker push "$CI_REGISTRY_IMAGE${tag}"
