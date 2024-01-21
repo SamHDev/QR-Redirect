@@ -1,0 +1,21 @@
+stages:
+  - docker
+
+build-docker-scratch:
+  variables:
+    GIT_DEPTH: 500
+  stage: docker
+  image:
+    name: alpine:3.16.2
+  script:
+    - apk add podman
+    - DOCKER_TAG_NAME="${CI_COMMIT_TAG:-master}"
+    - podman build --file $CI_PROJECT_DIR/Dockerfile --tag $CI_REGISTRY_IMAGE:$DOCKER_TAG_NAME --build-arg version=$DOCKER_TAG_NAME --build-arg release=$DOCKER_TAG_NAME --target void
+    - podman login --tls-verify --username "$CI_REGISTRY_USER" --password "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+    - podman push --tls-verify $CI_REGISTRY_IMAGE:$DOCKER_TAG_NAME
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "master"'
+    - if: '$CI_COMMIT_TAG != null'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+      allow_failure: true
