@@ -1,0 +1,95 @@
+$background: #06070C;
+$text: #EBECF3;
+$secondary: #2A346F;
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background-color: $background;
+
+  font-family: 'Inter', sans-serif;
+}
+
+@mixin wh($x: 100%) {
+  width: $x;
+  height: $x;
+}
+
+div.main {
+  display: block;
+  @include wh();
+
+  text-align: center;
+}
+
+div.title {
+  display: flex;
+  justify-content: center;
+
+  color: $text;
+  font-weight: bold;
+  font-size: 32px;
+
+  padding-top: 64px;
+}
+
+.items {
+  padding-top: 64px;
+
+  display: flex;
+  flex-direction: column;
+
+  div {
+    display: flex;
+    text-align: center;
+    flex-direction: column;
+    justify-content: center;
+
+    width: 240px;
+    padding: 12px;
+
+    margin: 0 auto;
+
+    color: $text;
+    border-radius: 4px;
+    border: 2px solid $secondary;
+
+    user-select: none;
+    cursor: pointer;
+
+    &:not(:last-child) {
+      margin-bottom: 12px;
+    }
+
+    transition: border-color 150ms;
+
+    &:hover {
+      border-color: lighten($secondary, 10%);
+    }
+
+    &.active {
+      background-color: $secondary;
+      border-color: transparent;
+      transition: background-color 150ms;
+
+      &:hover {
+        background-color: lighten($secondary, 10%);
+      }
+    }
+
+    position: relative;
+    &.expand::after {
+      font-family: 'Material Symbols Outlined', emoji;
+      content: 'chevron_right';
+      display: block;
+      position: absolute;
+      right: 16px;
+
+      padding: 12px;
+      margin: -12px;
+
+      cursor: grab;
+    }
+  }
+}

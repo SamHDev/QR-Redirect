@@ -1,0 +1,26 @@
+allow_custom = true
+
+[[users]]
+username = "sam"
+hash = "5ce32abaf7672687fa29adfa3a7dd3fa8f36e59cb1d55d93f6db788716e43238"
+
+[[users]]
+username = "guest"
+hash = "6b93ccba414ac1d0ae1e77f3fac560c748a6701ed6946735a49d463351518e16"
+
+[[items]]
+label = "Website"
+url = "https://samh.dev"
+
+
+[[items]]
+label = "LinkedIn"
+url = "https://samh.dev/linkedin"
+
+[[items]]
+label = "Github"
+url = "https://samh.dev/github"
+
+[[items]]
+label = "Rickroll"
+url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
