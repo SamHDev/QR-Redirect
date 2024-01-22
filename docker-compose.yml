@@ -1,6 +1,6 @@
 services:
   qr:
-    image: registry.samhdev.net:443/samhdev/qr-service:v0-0-1
+    image: 'registry.samhdev.net:443/samhdev/qr-service:v0-0-1'
     volumes:
       - type: bind
         source: ./config.toml
