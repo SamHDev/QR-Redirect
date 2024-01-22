@@ -1,26 +1,13 @@
+# Allow Custom URLs
 allow_custom = true
 
+# --- define users ---
 [[users]]
-username = "sam"
-hash = "5ce32abaf7672687fa29adfa3a7dd3fa8f36e59cb1d55d93f6db788716e43238"
-
-[[users]]
-username = "guest"
-hash = "6b93ccba414ac1d0ae1e77f3fac560c748a6701ed6946735a49d463351518e16"
-
-[[items]]
-label = "Website"
-url = "https://samh.dev"
+username = "user" # username
+hash = "c0a59647cd759e746d01a1be885694053bc33ee57d82c88382fd8f78bc3ae636" # password as a hex encoded sha256 digest
 
 
 [[items]]
-label = "LinkedIn"
-url = "https://samh.dev/linkedin"
+label = "Item 1" # display label
+url = "https://example.org/item1" # redirect url
 
-[[items]]
-label = "Github"
-url = "https://samh.dev/github"
-
-[[items]]
-label = "Rickroll"
-url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
