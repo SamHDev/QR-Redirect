@@ -1,3 +1,10 @@
 services:
   qr:
-    build .
+    image: registry.samhdev.net:443/samhdev/qr-service:v0-0-1
+    volumes:
+      - type: bind
+        source: ./config.toml
+        target: /config.toml
+        read_only: true
+    ports:
+      - 42081:8080
